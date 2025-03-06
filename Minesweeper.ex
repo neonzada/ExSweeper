@@ -23,8 +23,13 @@ defmodule Minesweeper do
 
   #-- is_mine/3: recebe um tabuleiro com o mapeamento das minas, uma linha, uma coluna. Devolve true caso a posição contenha
   # uma mina e false caso contrário.
-  # TODO: i dont understand the purpose of this function, ask
-  def is_mine(tab,l,c), do: get_pos(tab, l, c)
+  def is_mine(minas,l,c) do
+    cond do
+      get_pos(minas, l, c) == true -> true
+      true -> false
+    end
+  end
+
 
   # is_valid_pos/3 recebe o tamanho do tabuleiro (ex, em um tabuleiro 9x9, o tamanho é 9),
   # uma linha e uma coluna, e diz se essa posição é válida no tabuleiro.
@@ -100,7 +105,7 @@ defmodule Minesweeper do
 # - Se a posição {l,c} está fechada (contém "-"), escrever o número de minas adjascentes a esssa posição no tabuleiro (usar conta_minas)
   def abre_posicao(tab,minas,l,c) do
     cond do
-      is_mine(tab, l, c) -> update_pos(tab, l, c, "*")
+      is_mine(minas, l, c) -> update_pos(tab, l, c, "*")
       get_pos(tab, l, c) == "-" -> update_pos(tab, l, c, conta_minas_adj(tab, l, c))
       false -> tab #TODO: idk if return tab here is correct
     end
@@ -147,7 +152,7 @@ defmodule Minesweeper do
   end
 
 # gera_lista/2: recebe um inteiro n, um valor v, e gera uma lista contendo n vezes o valor v
-  def gera_lista(0,v), do: []
+  def gera_lista(0,_v), do: []
   def gera_lista(n,v), do: [v|gera_lista(n-1, v)]
 
 # -- gera_tabuleiro/1: recebe o tamanho do tabuleiro de jogo e gera um tabuleiro  novo, todo fechado (todas as posições
@@ -177,3 +182,56 @@ defmodule Minesweeper do
   def end_game(minas,tab), do: conta_fechadas(tab) == conta_minas(minas)
 
 end
+
+
+#engine code
+defmodule Engine do
+  @moduledoc """
+  Engine that handles minesweeper logic.
+  """
+  def main() do
+   v = IO.gets("Digite o tamanho do tabuleiro: \n")
+   {size,_} = Integer.parse(v)
+   minas = gen_mines_board(size) #TODO: something wrong here
+   #IO.puts("oi")
+   IO.inspect minas
+   tabuleiro = Minesweeper.gera_tabuleiro(size)
+   game_loop(minas,tabuleiro)
+  end
+  def game_loop(minas,tabuleiro) do
+    IO.puts Minesweeper.board_to_string(tabuleiro)
+    v = IO.gets("Digite uma linha: \n")
+    {linha,_} = Integer.parse(v)
+    v = IO.gets("Digite uma coluna: \n")
+    {coluna,_} = Integer.parse(v)
+    if (Minesweeper.is_mine(minas,linha,coluna)) do
+      IO.puts "VOCÊ PERDEU!!!!!!!!!!!!!!!!"
+      IO.puts Minesweeper.board_to_string(Minesweeper.abre_tabuleiro(minas,tabuleiro))
+      IO.puts "TENTE NOVAMENTE!!!!!!!!!!!!"
+    else
+      novo_tabuleiro = Minesweeper.abre_jogada(linha,coluna,minas,tabuleiro)
+      if (Minesweeper.end_game(minas,novo_tabuleiro)) do
+          IO.puts "VOCÊ VENCEU!!!!!!!!!!!!!!"
+          IO.puts Minesweeper.board_to_string(Minesweeper.abre_tabuleiro(minas,novo_tabuleiro))
+          IO.puts "PARABÉNS!!!!!!!!!!!!!!!!!"
+      else
+          game_loop(minas,novo_tabuleiro)
+      end
+    end
+  end
+  def gen_mines_board(size) do
+    add_mines(ceil(size*size*0.15), size, Minesweeper.gera_mapa_de_minas(size))
+  end
+  def add_mines(0,_size,mines), do: mines
+  def add_mines(n,size,mines) do
+    linha = :rand.uniform(size-1)
+    coluna = :rand.uniform(size-1)
+    if Minesweeper.is_mine(mines,linha,coluna) do
+      add_mines(n,size,mines)
+    else
+      add_mines(n-1,size,Minesweeper.update_pos(mines,linha,coluna,true))
+    end
+  end
+ end
+
+ Engine.main()
