@@ -64,7 +64,6 @@ defmodule Minesweeper do
   # minas adjacentes na posição aberta
   # - Se a posição a ser aberta não possui minas adjacentes, abrimos ela com zero (0) e recursivamente abrimos
   # as outras posições adjacentes a ela
-
   def abre_jogada(l, c, minas, tab) do
     adjMines = conta_minas_adj(minas,l,c)
     cond do
@@ -99,7 +98,6 @@ defmodule Minesweeper do
 # - Se a posição {l,c} já está aberta (contém um número), então essa posição não deve ser modificada
 # - Se a posição {l,c} contém uma mina no mapa de minas, então marcar  com "*" no tabuleiro
 # - Se a posição {l,c} está fechada (contém "-"), escrever o número de minas adjascentes a esssa posição no tabuleiro (usar conta_minas)
-
   def abre_posicao(tab,minas,l,c) do
     cond do
       is_mine(tab, l, c) -> update_pos(tab, l, c, "*")
@@ -149,30 +147,29 @@ defmodule Minesweeper do
   end
 
 # gera_lista/2: recebe um inteiro n, um valor v, e gera uma lista contendo n vezes o valor v
-
   def gera_lista(0,v), do: []
-  def gera_lista(n,v), do: [v|gera_lista(n-1)]
+  def gera_lista(n,v), do: [v|gera_lista(n-1, v)]
 
 # -- gera_tabuleiro/1: recebe o tamanho do tabuleiro de jogo e gera um tabuleiro  novo, todo fechado (todas as posições
 # contém "-"). Usar gera_lista
-
-  def gera_tabuleiro(n), do: gera_lista(n, "-")
+  def gera_tabuleiro(n), do: gera_lista(n, gera_lista(n, "-"))
 
 # -- gera_mapa_de_minas/1: recebe o tamanho do tabuleiro e gera um mapa de minas zero, onde todas as posições contém false
-
-  #def gera_mapa_de_minas(n), do: ...
+  def gera_mapa_de_minas(n), do: gera_lista(n, gera_lista(n, false))
 
 
 # conta_fechadas/1: recebe um tabueleiro de jogo e conta quantas posições fechadas existem no tabuleiro (posições com "-")
-
   def conta_fechadas(tab) do
-
+    tab
+    |> Enum.flat_map(& &1)
+    |> Enum.count(&(&1 == "-"))
   end
 
 # -- conta_minas/1: Recebe o tabuleiro de Minas (MBoard) e conta quantas minas existem no jogo
-
   def conta_minas(minas) do
-
+    minas
+    |> Enum.flat_map(& &1)
+    |> Enum.count(&(&1 == true))
   end
 
 # end_game?/2: recebe o tabuleiro de minas, o tauleiro do jogo, e diz se o jogo acabou.
