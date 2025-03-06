@@ -1,7 +1,3 @@
-# A seguir está o motor do jogo!
-# Somente descomentar essas linhas quando as funções do módulo anterior estiverem
-# todas implementadas
-
 defmodule Engine do
 #  def main() do
 #   v = IO.gets("Digite o tamanho do tabuleiro: \n")
