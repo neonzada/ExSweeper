@@ -19,17 +19,16 @@ defmodule Minesweeper do
 
   # update_pos/4 (update position): recebe um tabuleiro, uma linha, uma coluna e um novo valor. Devolve
   # o tabuleiro modificado com o novo valor na posiçao linha x coluna. Usar update_arr/3 e get_arr/2 na implementação
-  def update_pos(tab,l,c,v), do: update_arr(get_arr(tab, l), c, v)
+  def update_pos(tab,l,c,v) do
+    row = get_arr(tab, l)
+    newRow = update_arr(row, c, v)
+    update_arr(tab, l, newRow)
+    #TODO: ERA AQUIIIIIIIIII
+  end
 
   #-- is_mine/3: recebe um tabuleiro com o mapeamento das minas, uma linha, uma coluna. Devolve true caso a posição contenha
   # uma mina e false caso contrário.
-  def is_mine(minas,l,c) do
-    cond do
-      get_pos(minas, l, c) == true -> true
-      true -> false
-    end
-  end
-
+  def is_mine(minas,l,c), do: get_pos(minas, l, c) #???
 
   # is_valid_pos/3 recebe o tamanho do tabuleiro (ex, em um tabuleiro 9x9, o tamanho é 9),
   # uma linha e uma coluna, e diz se essa posição é válida no tabuleiro.
@@ -73,11 +72,13 @@ defmodule Minesweeper do
     adjMines = conta_minas_adj(minas,l,c)
     cond do
       is_mine(minas,l,c) -> end_game(minas,tab)               #mine, end game
-      get_pos(tab,l,c) == 0 -> tab                            #already open, return tab
+      get_pos(tab,l,c) != "-" -> tab                          #already open, return tab
       adjMines > 0 -> update_pos(tab,l,c,adjMines)            #adjMines, return tab with num
-      false ->
+      true ->
         #open with 0 and recursively open other adjacent positions
-        {l,c} = valid_moves(Enum.count(tab),l,c) #TODO: pattern match for every tuple returned by valid_moves
+        update_pos(tab,l,c,0)
+        [h|t] = valid_moves(Enum.count(tab),l,c) #TODO: pattern match for every tuple returned by valid_moves
+        {l,c} = h #gets first validmove, but how do I recursively open ts wtf
         abre_jogada(l,c,minas,update_pos(tab,l,c,0))
     end
 
@@ -107,7 +108,7 @@ defmodule Minesweeper do
     cond do
       is_mine(minas, l, c) -> update_pos(tab, l, c, "*")
       get_pos(tab, l, c) == "-" -> update_pos(tab, l, c, conta_minas_adj(tab, l, c))
-      false -> tab #TODO: idk if return tab here is correct
+      true -> tab #TODO: idk if return tab here is correct
     end
   end
 
@@ -221,15 +222,18 @@ defmodule Engine do
   end
   def gen_mines_board(size) do
     add_mines(ceil(size*size*0.15), size, Minesweeper.gera_mapa_de_minas(size))
-  end
+  end #ok
   def add_mines(0,_size,mines), do: mines
   def add_mines(n,size,mines) do
     linha = :rand.uniform(size-1)
     coluna = :rand.uniform(size-1)
+    #IO.puts("addou minas")
     if Minesweeper.is_mine(mines,linha,coluna) do
-      add_mines(n,size,mines)
+      #IO.puts("nao")
+      add_mines(n,size,mines) #do nothing if mine already placed
     else
-      add_mines(n-1,size,Minesweeper.update_pos(mines,linha,coluna,true))
+      #IO.puts("sim")
+      add_mines(n-1,size,Minesweeper.update_pos(mines,linha,coluna,true)) #add more mines until n=0
     end
   end
  end
