@@ -23,7 +23,6 @@ defmodule Minesweeper do
     row = get_arr(tab, l)
     newRow = update_arr(row, c, v)
     update_arr(tab, l, newRow)
-    #TODO: ERA AQUIIIIIIIIII
   end
 
   #-- is_mine/3: recebe um tabuleiro com o mapeamento das minas, uma linha, uma coluna. Devolve true caso a posição contenha
@@ -50,53 +49,31 @@ defmodule Minesweeper do
 
   # conta_minas_adj/3: recebe um tabuleiro com o mapeamento das minas e uma posicao (linha e coluna), e conta quantas minas
   # existem nas posições adjacentes
-  def conta_minas_adj(tab,l,c) do
-    valid_moves(Enum.count(tab),l,c)
-    |> Enum.filter(fn {l, c} -> is_mine(tab,l,c) end)
+  def conta_minas_adj(minas,l,c) do
+    valid_moves(Enum.count(minas),l,c)
+    |> Enum.filter(fn {l, c} -> is_mine(minas,l,c) end)
     |> Enum.count()
   end
 
-  # abre_jogada/4: é a função principal do jogo!!
-  # recebe uma posição a ser aberta (linha e coluna), o mapa de minas e o tabuleiro do jogo. Devolve como
-  # resposta o tabuleiro do jogo modificado com essa jogada.
+  # abre_jogada/4: Função principal do jogo! Recebe uma posição a ser aberta (linha e coluna), o mapa de minas e o tabuleiro do jogo.
+  # Devolve como resposta o tabuleiro do jogo modificado com essa jogada.
   # Essa função é recursiva, pois no caso da entrada ser uma posição sem minas adjacentes, o algoritmo deve
   # seguir abrindo todas as posições adjacentes até que se encontre posições adjacentes à minas.
-  # Vamos analisar os casos:
-  # - Se a posição a ser aberta é uma mina, o tabuleiro não é modificado e encerra
-  # - Se a posição a ser aberta já foi aberta, o tabuleiro não é modificado e encerra
-  # - Se a posição a ser aberta é adjacente a uma ou mais minas, devolver o tabuleiro modificado com o número de
-  # minas adjacentes na posição aberta
-  # - Se a posição a ser aberta não possui minas adjacentes, abrimos ela com zero (0) e recursivamente abrimos
-  # as outras posições adjacentes a ela
+  # - Se a posição a ser aberta é uma mina, o tabuleiro não é modificado e encerra;
+  # - Se a posição a ser aberta já foi aberta, o tabuleiro não é modificado e encerra;
+  # - Se a posição a ser aberta é adjacente a uma ou mais minas, devolver o tabuleiro modificado com o número de minas adjacentes na posição aberta;
+  # - Se a posição a ser aberta não possui minas adjacentes, abrimos ela com zero (0) e recursivamente abrimos as outras posições adjacentes a ela;
   def abre_jogada(l, c, minas, tab) do
     adjMines = conta_minas_adj(minas,l,c)
     cond do
-      is_mine(minas,l,c) -> end_game(minas,tab)               #mine, end game
-      get_pos(tab,l,c) != "-" -> tab                          #already open, return tab
-      adjMines > 0 -> update_pos(tab,l,c,adjMines)            #adjMines, return tab with num
-      true ->
-        #open with 0 and recursively open other adjacent positions
-        update_pos(tab,l,c,0)
-        [h|t] = valid_moves(Enum.count(tab),l,c) #TODO: pattern match for every tuple returned by valid_moves
-        {l,c} = h #gets first validmove, but how do I recursively open ts wtf
-        abre_jogada(l,c,minas,update_pos(tab,l,c,0))
+      is_mine(minas,l,c) -> end_game(minas, tab)        #TODO: mine, end game? it throws an error after
+      get_pos(tab,l,c) != "-" -> tab                    #already open, return tab
+      adjMines > 0 -> update_pos(tab,l,c,adjMines)      #adjMines, return tab with num
+      true ->                                           #open with 0 and recursively open other adjacent positions
+        newTab = update_pos(tab, l, c, 0)
+        moves = valid_moves(Enum.count(tab), l, c)
+        Enum.reduce(moves, newTab, fn {row, col}, accTab -> abre_jogada(row, col, minas, accTab) end)
     end
-
-    # case is_mine(minas, l, c) do
-    #   # If mine, end game
-    #   true -> end_game(minas, tab)
-
-    #   # If not, check if its already open
-    #   false ->
-    #     if get_pos(tab, l, c) == 0 do tab end
-    #     minas_adj = conta_minas_adj(minas, l, c)
-    #     if minas_adj > 0 do
-    #       update_pos(tab, l, c, minas_adj)
-    #     else
-    #       update_pos(tab, l, c, 0)
-    #       valid_moves(Enum.count(tab), l, c)
-    #     end
-    # end
   end
 
 # abre_posicao/4, que recebe um tabueiro de jogos, o mapa de minas, uma linha e uma coluna
@@ -113,22 +90,17 @@ defmodule Minesweeper do
   end
 
 
-
 # abre_tabuleiro/2: recebe o mapa de Minas e o tabuleiro do jogo, e abre todo o tabuleiro do jogo, mostrando
 # onde estão as minas e os números nas posições adjecentes às minas.Essa função é usada para mostrar
 # todo o tabuleiro no caso de vitória ou derrota. Para implementar esta função, usar a função abre_posicao/4
 
-  #TODO: make ts work
+#TODO: make ts work in conjunction with the engine code
   def abre_tabuleiro(minas,tab) do
-    #abre_posicao(tab, minas, l, c)
+    Enum.reduce(tab, fn {row, col} -> abre_posicao(tab, minas, row, col) end)
   end
 
 # board_to_string/1: -- Recebe o tabuleiro do jogo e devolve uma string que é a representação visual desse tabuleiro.
-# Essa função é aplicada no tabuleiro antes de fazer o print dele na tela. Usar a sua imaginação para fazer um
-# tabuleiro legal. Olhar os exemplos no .pdf com a especificação do trabalho. Não esquecer de usar \n para quebra de linhas.
-# Você pode quebrar essa função em mais de uma: print_header, print_linhas, etc...
-
-  #TODO: test ts
+# Essa função é aplicada no tabuleiro antes de fazer o print dele na tela.
   def board_to_string(tab) do
     header = print_header(length(hd(tab)))
     rows = print_rows(tab)
@@ -136,13 +108,13 @@ defmodule Minesweeper do
   end
 
   defp print_header(size) do
-    letters = Enum.map(?A..(?A + size - 1), &<<&1>>)
+    letters = Enum.map(?0..(?0 + size - 1), &<<&1>>)
     "   " <> Enum.join(letters, "   ") <> " \n"
   end
 
   defp print_rows(tab) do
     tab
-    |> Enum.with_index(1)
+    |> Enum.with_index(0)
     |> Enum.map(&print_row/1)
     |> Enum.join("   " <> String.duplicate("-", length(hd(tab)) * 4 - 1) <> " \n")
   end
@@ -156,8 +128,7 @@ defmodule Minesweeper do
   def gera_lista(0,_v), do: []
   def gera_lista(n,v), do: [v|gera_lista(n-1, v)]
 
-# -- gera_tabuleiro/1: recebe o tamanho do tabuleiro de jogo e gera um tabuleiro  novo, todo fechado (todas as posições
-# contém "-"). Usar gera_lista
+# -- gera_tabuleiro/1: recebe o tamanho do tabuleiro de jogo e gera um tabuleiro  novo, todo fechado (todas as posições contém "-"). Usar gera_lista
   def gera_tabuleiro(n), do: gera_lista(n, gera_lista(n, "-"))
 
 # -- gera_mapa_de_minas/1: recebe o tamanho do tabuleiro e gera um mapa de minas zero, onde todas as posições contém false
@@ -193,7 +164,7 @@ defmodule Engine do
   def main() do
    v = IO.gets("Digite o tamanho do tabuleiro: \n")
    {size,_} = Integer.parse(v)
-   minas = gen_mines_board(size) #TODO: something wrong here
+   minas = gen_mines_board(size)
    #IO.puts("oi")
    IO.inspect minas
    tabuleiro = Minesweeper.gera_tabuleiro(size)
