@@ -77,7 +77,7 @@ defmodule Minesweeper do
   def abre_posicao(tab,minas,l,c) do
     cond do
       is_mine(minas, l, c) -> update_pos(tab, l, c, "*")
-      get_pos(tab, l, c) == "-" -> update_pos(tab, l, c, conta_minas_adj(tab, l, c))
+      get_pos(tab, l, c) == "-" -> update_pos(tab, l, c, conta_minas_adj(minas, l, c))
       true -> tab
     end
   end
